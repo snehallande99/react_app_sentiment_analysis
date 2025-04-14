@@ -1,0 +1,176 @@
+/* FakeNewsPage.css */
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #0f172a;
+  color: #fff;
+}
+
+.fake-news-page {
+  padding: 0;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #0f172a;
+  padding: 1rem 2rem;
+  border-bottom: 1px solid #1e293b;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #38bdf8;
+}
+
+.nav a {
+  color: #cbd5e1;
+  margin-left: 1.5rem;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.main {
+  padding: 2rem;
+  text-align: center;
+}
+
+.title {
+  font-size: 2.2rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: #94a3b8;
+  margin-bottom: 2rem;
+}
+
+.analysis-options {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.card {
+  background-color: #1e293b;
+  padding: 1.5rem;
+  border-radius: 12px;
+  width: 300px;
+  transition: 0.3s ease;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  background-color: #334155;
+}
+
+.card .icon {
+  font-size: 2rem;
+  color: #38bdf8;
+  margin-bottom: 1rem;
+}
+
+.card h2 {
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.card p {
+  font-size: 0.95rem;
+  color: #cbd5e1;
+  margin-bottom: 1rem;
+}
+
+.select-btn {
+  background-color: #38bdf8;
+  color: #0f172a;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.select-btn:hover {
+  background-color: #0ea5e9;
+}
+
+.platform-label {
+  margin-top: 2rem;
+  font-size: 1.2rem;
+  color: #f1f5f9;
+}
+
+.platforms {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin: 1rem 0 2rem;
+  flex-wrap: wrap;
+}
+
+.platform {
+  background-color: #1e293b;
+  padding: 1rem 2rem;
+  border-radius: 10px;
+  font-size: 1rem;
+  color: #e2e8f0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: 0.3s ease;
+}
+
+.platform:hover {
+  background-color: #334155;
+}
+
+.platform-icon {
+  font-size: 1.5rem;
+}
+
+.content-analysis {
+  background-color: #1e293b;
+  padding: 2rem;
+  border-radius: 12px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.content-analysis h3 {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.url-input {
+  width: 100%;
+  padding: 0.8rem;
+  border: none;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  background-color: #0f172a;
+  color: #e2e8f0;
+}
+
+.analyze-btn {
+  background-color: #38bdf8;
+  color: #0f172a;
+  border: none;
+  padding: 0.7rem 1.5rem;
+  font-size: 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.analyze-btn:hover {
+  background-color: #0ea5e9;
+}
