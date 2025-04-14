@@ -9,7 +9,7 @@ const NewsSentiment = () => {
         <h1>SentiNews</h1>
       </header>
 
-      <main className="news-content">
+      <main className="news-content ">
         <section className="news-article">
           <h2 className="news-title">
             Global Economic Recovery Shows Promising Signs Despite Challenges
