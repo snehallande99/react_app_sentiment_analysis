@@ -15,7 +15,7 @@ function HomePage() {
           Empower your research, decisions, and awareness with data-driven sentiment analysis.
         </p>
 
-        <button className="get-started-btn" onClick={() => navigate('/')}>
+        <button className="get-started-btn" onClick={() => navigate('/dashboard')}>
           Get Started
         </button>
       </div>
