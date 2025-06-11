@@ -1,15 +1,184 @@
-from datetime import date
-from fastapi import APIRouter, Query, UploadFile, File
-import requests  # ✅ correct
-
+from datetime import date, datetime
+from fastapi import APIRouter, Query, UploadFile, File, HTTPException
+import requests
 import pandas as pd
 import joblib
 from io import StringIO
 import os
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+from transformers import pipeline
+import emoji
+import re
+import torch
+import unicodedata
+from typing import List, Dict
+import praw
 
-from ...models.fakenews import collect_sentiment_data, create_pie_chart,analyze_sentiment,emoji_sentiment_score,detect_fake_news
+from app.models.fakenews import collect_sentiment_data, create_pie_chart,analyze_sentiment,emoji_sentiment_score,detect_fake_news
 
 router = APIRouter()
+
+# Initialize YouTube API client
+YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY", "AIzaSyAkV-yU_MMD1C7HaBhD1KzPkxebgKAob5M")
+youtube = build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
+
+# Initialize Reddit API client
+REDDIT_CLIENT_ID = os.getenv("REDDIT_CLIENT_ID", "rR9DjWxscpZ2_CqlPEuhpA")
+REDDIT_CLIENT_SECRET = os.getenv("REDDIT_CLIENT_SECRET", "ehfl-fSSr_LfZen77UvDgo7q6a5YmQ")
+REDDIT_USER_AGENT = os.getenv("REDDIT_USER_AGENT", "sentiment_analysis_bot_v1.0_by_Salt_Quantity_7075")
+
+reddit = praw.Reddit(
+    client_id=REDDIT_CLIENT_ID,
+    client_secret=REDDIT_CLIENT_SECRET,
+    user_agent=REDDIT_USER_AGENT
+)
+
+# Initialize sentiment analyzer
+sentiment_pipeline = pipeline(
+    "sentiment-analysis",
+    model="distilbert-base-uncased-finetuned-sst-2-english",
+    device=0 if torch.cuda.is_available() else -1
+)
+
+def preprocess_text(text: str) -> str:
+    """Preprocess text by handling emojis and cleaning"""
+    # Convert emojis to text
+    text = emoji.demojize(text)
+    
+    # Remove URLs
+    text = re.sub(r'http\S+|www\S+|https\S+', '', text, flags=re.MULTILINE)
+    
+    # Normalize unicode characters to their closest ASCII equivalent
+    text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('ascii')
+
+    # Remove non-alphanumeric characters (keep spaces)
+    text = re.sub(r'[^a-zA-Z0-9\s]', '', text)
+    
+    # Remove extra whitespace and strip
+    text = ' '.join(text.split()).strip()
+
+    # If the text becomes empty after processing, provide a placeholder
+    if not text:
+        return "[EMPTY_COMMENT]"
+
+    return text
+
+def analyze_sentiment_common(text: str) -> str:
+    """Analyze sentiment of a single text using the common pipeline"""
+    processed_text = preprocess_text(text)
+    
+    # If the processed text is empty, return a default sentiment
+    if not processed_text:
+        return 'Neutral'
+
+    try:
+        # Get sentiment prediction, with truncation handled by the pipeline
+        result = sentiment_pipeline([processed_text], truncation=True)[0]
+        label_mapping = {
+            'NEGATIVE': 'Negative',
+            'POSITIVE': 'Positive'
+        }
+        # Default to 'Neutral' if the label is not found in the mapping
+        return label_mapping.get(result['label'], 'Neutral')
+    except Exception as e:
+        print(f"Error analyzing sentiment for text: '{processed_text}'. Error: {e}")
+        return 'Neutral' # Return neutral sentiment on error
+
+# Rename analyze_sentiment_youtube to analyze_sentiment_common as it's now shared
+analyze_sentiment_youtube = analyze_sentiment_common
+
+@router.post("/youtube/analyze")
+async def analyze_youtube_comments(video_id: Dict[str, str]):
+    video_id_str = video_id.get('videoId')
+    if not video_id_str:
+        raise HTTPException(status_code=400, detail="Video ID is required")
+
+    comments = []
+    try:
+        youtube_request = youtube.commentThreads().list(
+            part='snippet',
+            videoId=video_id_str,
+            maxResults=100,
+            textFormat='plainText'
+        )
+        
+        while youtube_request and len(comments) < 100:
+            response = youtube_request.execute()
+            
+            for item in response['items']:
+                comment = item['snippet']['topLevelComment']['snippet']
+                comment_text = comment['textDisplay']
+                sentiment = analyze_sentiment_common(comment_text) # Use common analysis function
+                comments.append({
+                    'text': comment_text,
+                    'sentiment': sentiment,
+                    'author': comment['authorDisplayName'],
+                    'publishedAt': comment['publishedAt']
+                })
+            
+            youtube_request = youtube.commentThreads().list_next(youtube_request, response)
+
+    except HttpError as e:
+        raise HTTPException(status_code=e.resp.status, detail=f'YouTube API error: {e.content.decode()}')
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'Server error: {str(e)}')
+
+    # Calculate sentiment distribution
+    sentiment_counts = {
+        'Positive': 0,
+        'Negative': 0,
+        'Neutral': 0
+    }
+    
+    for comment in comments:
+        sentiment_counts[comment['sentiment']] += 1
+
+    return {
+        'comments': comments,
+        'sentimentDistribution': sentiment_counts,
+        'totalComments': len(comments)
+    }
+
+@router.post("/reddit/analyze")
+async def analyze_reddit_comments(post_url_data: Dict[str, str]):
+    post_url = post_url_data.get('postUrl')
+    if not post_url:
+        raise HTTPException(status_code=400, detail="Reddit post URL is required")
+
+    comments = []
+    try:
+        submission = reddit.submission(url=post_url)
+        submission.comments.replace_more(limit=0) # Flatten comment tree
+
+        for top_level_comment in submission.comments.list()[:100]: # Limit to 100 comments
+            if top_level_comment.author and top_level_comment.body:
+                comment_text = top_level_comment.body
+                sentiment = analyze_sentiment_common(comment_text) # Use common analysis function
+                comments.append({
+                    'text': comment_text,
+                    'sentiment': sentiment,
+                    'author': top_level_comment.author.name,
+                    'publishedAt': datetime.fromtimestamp(top_level_comment.created_utc).isoformat()
+                })
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'Reddit API error or processing error: {str(e)}')
+
+    # Calculate sentiment distribution
+    sentiment_counts = {
+        'Positive': 0,
+        'Negative': 0,
+        'Neutral': 0
+    }
+    
+    for comment in comments:
+        sentiment_counts[comment['sentiment']] += 1
+
+    return {
+        'comments': comments,
+        'sentimentDistribution': sentiment_counts,
+        'totalComments': len(comments)
+    }
 
 @router.post("/predict-sentiment")
 async def predict_sentiment(file: UploadFile = File(...)):

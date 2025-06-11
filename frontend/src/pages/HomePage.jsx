@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import '../styles/homepage.css'; // Importing external CSS
+import { FaYoutube, FaReddit } from 'react-icons/fa'; // Importing icons
 
 function HomePage() {
   const navigate = useNavigate();
@@ -17,6 +18,10 @@ function HomePage() {
 
         <button className="get-started-btn" onClick={() => navigate('/dashboard')}>
           Get Started
+        </button>
+
+        <button className="social-media-btn" onClick={() => navigate('/socialmedia')} style={{ marginTop: '20px', padding: '10px 20px', backgroundColor: '#100a37', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
+          Go to Social Media Analysis
         </button>
       </div>
     </div>

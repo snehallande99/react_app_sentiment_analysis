@@ -1,11 +1,8 @@
 from fastapi import FastAPI
-from app.api.routes import router as api_router
+from fastapi.middleware.cors import CORSMiddleware
+from app.api.routes.sentiment import router as sentiment_router # Renamed for clarity
 
 app = FastAPI(title="Sentiment Analysis API")
-app.include_router(api_router)
-from fastapi.middleware.cors import CORSMiddleware
-
-
 
 app.add_middleware(
     CORSMiddleware,
@@ -14,3 +11,5 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(sentiment_router, prefix="/api") 
