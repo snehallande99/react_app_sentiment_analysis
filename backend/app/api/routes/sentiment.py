@@ -34,56 +34,75 @@ reddit = praw.Reddit(
     user_agent=REDDIT_USER_AGENT
 )
 
-# Initialize sentiment analyzer
+# Initialize sentiment analyzer with a more robust model
 sentiment_pipeline = pipeline(
     "sentiment-analysis",
-    model="distilbert-base-uncased-finetuned-sst-2-english",
+    model="finiteautomata/bertweet-base-sentiment-analysis",  # Better for social media content
     device=0 if torch.cuda.is_available() else -1
 )
 
 def preprocess_text(text: str) -> str:
-    """Preprocess text by handling emojis and cleaning"""
+    """Enhanced preprocessing for social media text"""
     # Convert emojis to text
     text = emoji.demojize(text)
     
     # Remove URLs
     text = re.sub(r'http\S+|www\S+|https\S+', '', text, flags=re.MULTILINE)
     
-    # Normalize unicode characters to their closest ASCII equivalent
+    # Handle common social media patterns
+    text = re.sub(r'@\w+', '', text)  # Remove mentions
+    text = re.sub(r'#\w+', '', text)  # Remove hashtags
+    text = re.sub(r'RT\s*:', '', text)  # Remove retweet markers
+    
+    # Normalize unicode characters
     text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('ascii')
-
-    # Remove non-alphanumeric characters (keep spaces)
-    text = re.sub(r'[^a-zA-Z0-9\s]', '', text)
+    
+    # Handle repeated characters (e.g., "soooooo" -> "so")
+    text = re.sub(r'(.)\1+', r'\1', text)
+    
+    # Remove non-alphanumeric characters but keep important punctuation
+    text = re.sub(r'[^a-zA-Z0-9\s.,!?]', '', text)
     
     # Remove extra whitespace and strip
     text = ' '.join(text.split()).strip()
-
+    
     # If the text becomes empty after processing, provide a placeholder
     if not text:
         return "[EMPTY_COMMENT]"
-
+    
     return text
 
 def analyze_sentiment_common(text: str) -> str:
-    """Analyze sentiment of a single text using the common pipeline"""
+    """Enhanced sentiment analysis with confidence threshold"""
     processed_text = preprocess_text(text)
     
-    # If the processed text is empty, return a default sentiment
     if not processed_text:
         return 'Neutral'
 
     try:
-        # Get sentiment prediction, with truncation handled by the pipeline
+        # Get sentiment prediction with confidence score
         result = sentiment_pipeline([processed_text], truncation=True)[0]
+        
+        # Map labels to our categories
         label_mapping = {
-            'NEGATIVE': 'Negative',
-            'POSITIVE': 'Positive'
+            'POS': 'Positive',
+            'NEG': 'Negative',
+            'NEU': 'Neutral'
         }
-        # Default to 'Neutral' if the label is not found in the mapping
-        return label_mapping.get(result['label'], 'Neutral')
+        
+        # Get the predicted label and confidence score
+        predicted_label = label_mapping.get(result['label'], 'Neutral')
+        confidence = result['score']
+        
+        # If confidence is low, default to Neutral
+        if confidence < 0.6:
+            return 'Neutral'
+            
+        return predicted_label
+        
     except Exception as e:
         print(f"Error analyzing sentiment for text: '{processed_text}'. Error: {e}")
-        return 'Neutral' # Return neutral sentiment on error
+        return 'Neutral'
 
 # Rename analyze_sentiment_youtube to analyze_sentiment_common as it's now shared
 analyze_sentiment_youtube = analyze_sentiment_common

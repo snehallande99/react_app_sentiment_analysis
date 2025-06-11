@@ -64,112 +64,197 @@ const YouTubeAnalysis = () => {
     if (!analysis) return null;
 
     return {
-      labels: Object.keys(analysis.sentimentDistribution),
+      labels: ['Positive', 'Negative', 'Neutral'], // Ensure consistent order
       datasets: [
         {
-          data: Object.values(analysis.sentimentDistribution),
-          backgroundColor: ['#100a37', '#3c4e8f', '#87a1c4'], // Blue/Violet theme for chart
-          borderWidth: 1,
+          data: [analysis.sentimentDistribution.Positive, analysis.sentimentDistribution.Negative, analysis.sentimentDistribution.Neutral],
+          backgroundColor: ['#2E9CCA', '#464866', '#AAABB8'], // Consistent with the new dark blue theme
+          borderColor: '#1A202C',
+          borderWidth: 2,
         },
       ],
     };
   };
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px', backgroundColor: '#f8f8f8', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-      <div style={{ textAlign: 'center', marginBottom: '40px', color: '#000000' }}>
-        <FaYoutube size={50} color="#FF0000" style={{ marginBottom: '20px' }} />
-        <h1 style={{ marginBottom: '20px', color: '#100a37' }}>YouTube Comment Analysis</h1>
-        <p style={{ color: '#333333', marginBottom: '30px' }}>
-          Enter a YouTube video ID to analyze the sentiment of its comments
+    <div style={{
+      minHeight: '100vh',
+      backgroundColor: '#1A202C', // Deep blue background
+      color: 'white', // Default text color
+      padding: '50px 20px',
+      fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+    }}>
+      <div style={{
+        textAlign: 'center',
+        marginBottom: '40px',
+        width: '100%',
+        maxWidth: '800px',
+      }}>
+        <FaYoutube size={60} color="#63B3ED" style={{ marginBottom: '20px', filter: 'drop-shadow(0px 0px 8px rgba(99, 179, 237, 0.7))' }} />
+        <h1 style={{
+          fontSize: '2.8rem',
+          marginBottom: '15px',
+          color: '#63B3ED',
+          textShadow: '2px 2px 4px rgba(0,0,0,0.4)',
+        }}>
+          YouTube Comment Sentiment Analysis
+        </h1>
+        <p style={{
+          fontSize: '1.1rem',
+          color: '#CBD5E0',
+          marginBottom: '30px',
+          lineHeight: '1.6',
+        }}>
+          Enter a YouTube video ID below to analyze the sentiment of its comments. Our system will process the comments and provide a detailed sentiment distribution, helping you understand public opinion on the video content.
         </p>
 
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '30px' }}>
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '15px',
+          marginBottom: '40px',
+          alignItems: 'center',
+        }}>
           <input
             type="text"
             value={videoId}
             onChange={(e) => setVideoId(e.target.value)}
-            placeholder="Enter YouTube Video ID"
+            placeholder="e.g., dQw4w9WgXcQ (Video ID)"
             style={{
-              padding: '10px',
-              width: '300px',
-              borderRadius: '5px',
-              border: '1px solid #87a1c4',
-              color: '#000000',
+              padding: '12px 15px',
+              width: '100%',
+              maxWidth: '400px',
+              borderRadius: '8px',
+              border: '1px solid #4A5568',
+              backgroundColor: '#2D3748',
+              color: '#E2E8F0',
+              fontSize: '1rem',
+              boxShadow: 'inset 1px 1px 3px rgba(0,0,0,0.4)',
             }}
           />
           <button
             onClick={handleAnalyze}
             disabled={loading}
             style={{
-              padding: '10px 20px',
-              backgroundColor: '#100a37',
+              padding: '12px 25px',
+              backgroundColor: '#4299E1',
               color: 'white',
               border: 'none',
-              borderRadius: '5px',
+              borderRadius: '8px',
               cursor: loading ? 'not-allowed' : 'pointer',
               opacity: loading ? 0.7 : 1,
+              fontSize: '1.1rem',
+              fontWeight: 'bold',
+              transition: 'all 0.3s ease',
+              boxShadow: '2px 2px 5px rgba(0,0,0,0.3)',
             }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#3182CE'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#4299E1'}
           >
             {loading ? 'Analyzing...' : 'Analyze Comments'}
           </button>
         </div>
 
         {error && (
-          <div style={{ color: '#f44336', marginBottom: '20px' }}>{error}</div>
+          <div style={{ color: '#FC8181', marginBottom: '20px', fontSize: '1.1rem' }}>{error}</div>
         )}
       </div>
 
       {analysis && (
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '40px' }}>
-            <div style={{ flex: 1, padding: '20px', backgroundColor: '#ffffff', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-              <h2 style={{ marginBottom: '20px', color: '#100a37' }}>Sentiment Distribution</h2>
-              <div style={{ height: '200px' }}>
-                {getChartData() && <Pie data={getChartData()!} />}
-              </div>
-            </div>
-            <div style={{ flex: 1, padding: '20px', marginLeft: '20px', backgroundColor: '#ffffff', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-              <h2 style={{ marginBottom: '20px', color: '#100a37' }}>Summary</h2>
-              <p style={{ color: '#000000' }}>Total Comments Analyzed: {analysis.totalComments}</p>
-              {Object.entries(analysis.sentimentDistribution).map(([sentiment, count]) => (
-                <p key={sentiment} style={{ color: '#000000' }}>
-                  {sentiment}: {count} comments
-                </p>
-              ))}
+        <div style={{
+          width: '100%',
+          maxWidth: '1200px',
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          gap: '30px',
+          marginTop: '20px',
+        }}>
+          <div style={{
+            flex: 1,
+            minWidth: '300px',
+            maxWidth: '450px',
+            padding: '30px',
+            backgroundColor: '#2D3748',
+            borderRadius: '12px',
+            boxShadow: '8px 8px 16px rgba(0, 0, 0, 0.6), -8px -8px 16px rgba(45, 55, 72, 0.3)',
+            textAlign: 'center',
+          }}>
+            <h2 style={{ marginBottom: '20px', color: '#90CDF4', fontSize: '1.8rem' }}>Sentiment Distribution</h2>
+            <div style={{ height: '250px', width: '250px', margin: '0 auto' }}>
+              {getChartData() && <Pie data={getChartData()!} options={{ responsive: true, maintainAspectRatio: false }} />}
             </div>
           </div>
+          <div style={{
+            flex: 1,
+            minWidth: '300px',
+            maxWidth: '450px',
+            padding: '30px',
+            backgroundColor: '#2D3748',
+            borderRadius: '12px',
+            boxShadow: '8px 8px 16px rgba(0, 0, 0, 0.6), -8px -8px 16px rgba(45, 55, 72, 0.3)',
+            textAlign: 'left',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+          }}>
+            <h2 style={{ marginBottom: '20px', color: '#90CDF4', fontSize: '1.8rem' }}>Analysis Summary</h2>
+            <p style={{ color: '#E2E8F0', fontSize: '1.1rem', marginBottom: '10px' }}>
+              Total Comments Analyzed: <strong style={{ color: '#63B3ED' }}>{analysis.totalComments}</strong>
+            </p>
+            {Object.entries(analysis.sentimentDistribution).map(([sentiment, count]) => (
+              <p key={sentiment} style={{ color: '#E2E8F0', fontSize: '1.1rem', marginBottom: '5px' }}>
+                <strong style={{ color: sentiment === 'Positive' ? '#48BB78' : 
+                                  sentiment === 'Negative' ? '#F56565' : '#ECC94B' }}>
+                  {sentiment}
+                </strong>: {count} comments
+              </p>
+            ))}
+          </div>
 
-          <div style={{ backgroundColor: '#ffffff', borderRadius: '8px', padding: '20px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-            <h2 style={{ marginBottom: '20px', color: '#100a37' }}>Comments</h2>
-            <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
+          <div style={{
+            width: '100%',
+            marginTop: '30px',
+            backgroundColor: '#2D3748',
+            borderRadius: '12px',
+            padding: '30px',
+            boxShadow: '8px 8px 16px rgba(0, 0, 0, 0.6), -8px -8px 16px rgba(45, 55, 72, 0.3)',
+          }}>
+            <h2 style={{ marginBottom: '20px', color: '#90CDF4', fontSize: '1.8rem' }}>Detailed Comments Breakdown</h2>
+            <div style={{ maxHeight: '500px', overflowY: 'auto', paddingRight: '10px' }}>
               {analysis.comments.map((comment, index) => (
                 <div
                   key={index}
                   style={{
                     padding: '15px',
-                    borderBottom: '1px solid #eee',
-                    backgroundColor: comment.sentiment === 'Positive' ? '#e8f5e9' : 
-                                   comment.sentiment === 'Negative' ? '#ffebee' : '#e3f2fd',
-                    color: '#000000',
+                    marginBottom: '10px',
+                    borderRadius: '8px',
+                    backgroundColor: '#1A202C', // Darker background for individual comments
+                    boxShadow: 'inset 1px 1px 3px rgba(0,0,0,0.4)',
+                    border: '1px solid #4A5568',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                    <strong style={{ color: '#000000' }}>{comment.author}</strong>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <strong style={{ color: '#63B3ED', fontSize: '1.1rem' }}>{comment.author}</strong>
                     <span style={{
-                      padding: '3px 8px',
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                      backgroundColor: comment.sentiment === 'Positive' ? '#4CAF50' :
-                                     comment.sentiment === 'Negative' ? '#f44336' : '#2196F3',
+                      padding: '5px 12px',
+                      borderRadius: '15px',
+                      fontSize: '13px',
+                      fontWeight: 'bold',
+                      backgroundColor: comment.sentiment === 'Positive' ? '#2E9CCA' :
+                                     comment.sentiment === 'Negative' ? '#464866' : '#AAABB8',
                       color: 'white',
                     }}>
                       {comment.sentiment}
                     </span>
                   </div>
-                  <p style={{ margin: '0', color: '#000000' }}>{comment.text}</p>
-                  <small style={{ color: '#000000' }}>
-                    {new Date(comment.publishedAt).toLocaleString()}
+                  <p style={{ margin: '0 0 8px 0', color: '#E2E8F0', fontSize: '1rem' }}>{comment.text}</p>
+                  <small style={{ color: '#A0AEC0', fontSize: '0.85rem' }}>
+                    Published: {new Date(comment.publishedAt).toLocaleString()}
                   </small>
                 </div>
               ))}
