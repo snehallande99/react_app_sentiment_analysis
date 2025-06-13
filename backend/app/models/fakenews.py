@@ -108,7 +108,7 @@ def detect_fake_news(text):
     cleaned = clean_text(text)
     vector = tfidf_vectorizer.transform([cleaned])
     pred = fake_news_model.predict(vector)[0]
-    return "Fake News ❌" if pred == 1 else "Real News ✅"
+    return "Fake News ❌" if pred == 0 else "Real News ✅"
 
 # Sentiment analysis
 def analyze_sentiment(text, language):
@@ -125,11 +125,12 @@ def analyze_sentiment(text, language):
         result = multilingual_sentiment_analyzer(text)[0]
         label = result['label'].lower()
         score = result['score']
-        if "positive" in label:
+        if score>0.4:
             return "सकारात्मक 😊", score
-        elif "negative" in label:
+        elif score<0.3:
             return "नकारात्मक ☹️", score
-        return "तटस्थ 😐", score
+        else:
+            return "तटस्थ 😐", score
 
 # Collect sentiment data
 def collect_sentiment_data(api_key, category, start_date, end_date):
